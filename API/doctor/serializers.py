@@ -1,11 +1,20 @@
 from rest_framework import serializers
-from .models import Doctor
+from .models import Doctor, Specialization
 from authentication.models import User
 
+class SpecializationSerializer(serializers.ModelSerializer):
+  class Meta:
+    model = Specialization
+    fields = "__all__"
+
 class DoctorCreateSerializer(serializers.ModelSerializer):
+  specialization = SpecializationSerializer(many=True)
+
   class Meta:
     model = Doctor
-    fields = ["phone_number", "medical_college_reg_number"]
+    fields = ["phone_number", "medical_college_reg_number", "specializations"]
+
+# User serializer to be used in DoctorSerializer
 
 class UserSerializer(serializers.ModelSerializer):
   class Meta:
