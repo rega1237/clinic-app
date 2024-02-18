@@ -2,10 +2,23 @@ from rest_framework import serializers
 from .models import Doctor, Specialization
 from authentication.models import User
 
-class SpecializationSerializer(serializers.ModelSerializer):
+# User serializer to be used in DoctorSerializer
+
+class UserSerializer(serializers.ModelSerializer):
   class Meta:
-    model = Specialization
-    fields = "__all__"
+    model = User
+    fields = ["email", "first_name", "last_name"]
+
+class SpecializationSerializer(serializers.ModelSerializer):
+    doctor_name = serializers.SerializerMethodField()
+    
+    class Meta:
+      model = Specialization
+      fields = ["id", "name", "doctor_name"]
+
+    def get_doctor_name(self, obj):
+      doctors = obj.doctors.all()
+      return [doctor.user.first_name + " " + doctor.user.last_name for doctor in doctors]
 
 class DoctorCreateSerializer(serializers.ModelSerializer):
   specialization = SpecializationSerializer(many=True)
@@ -14,19 +27,13 @@ class DoctorCreateSerializer(serializers.ModelSerializer):
     model = Doctor
     fields = ["phone_number", "medical_college_reg_number", "specializations"]
 
-# User serializer to be used in DoctorSerializer
-
-class UserSerializer(serializers.ModelSerializer):
-  class Meta:
-    model = User
-    fields = ["email", "first_name", "last_name"]
-
 class DoctorSerializer(serializers.ModelSerializer):
   user = UserSerializer()
+  specializations = SpecializationSerializer(many=True)
   
   class Meta:
     model = Doctor
-    fields = ["user", "phone_number", "medical_college_reg_number"]
+    fields = ["user", "phone_number", "medical_college_reg_number", "specializations"]
 
   def update(self, instance, validated_data):
     user_data = validated_data.pop('user')
@@ -39,3 +46,16 @@ class DoctorSerializer(serializers.ModelSerializer):
     instance.medical_college_reg_number = validated_data.get('medical_college_reg_number', instance.medical_college_reg_number)
     instance.save()
     return instance
+  
+class DoctorShowSerializer(serializers.ModelSerializer):
+  specializations = SpecializationSerializer(many=True, read_only=True)
+
+  user_full_name = serializers.SerializerMethodField()
+
+
+  class Meta:
+    model = Doctor
+    fields = ["user_full_name", "phone_number", "medical_college_reg_number", "specializations"]
+
+  def get_user_full_name(self, obj):
+    return obj.user.first_name + " " + obj.user.last_name
