@@ -11,7 +11,7 @@ class Doctor(models.Model):
     return f"Dr. {self.user.first_name} {self.user.last_name} - {self.medical_college_reg_number}"
   
 class Specialization(models.Model):
-  name = models.CharField(max_length=100)
+  name = models.CharField(max_length=100, unique=True)
   doctors = models.ManyToManyField(Doctor, related_name='specializations', blank=True)
 
   def __str__(self):
